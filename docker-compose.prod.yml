@@ -1,0 +1,89 @@
+name: shlink-natura
+
+services:
+  shlink:
+    container_name: shlink
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SHLINK_VERSION: ${SHLINK_VERSION:-latest}
+        SHLINK_RUNTIME: rr
+    restart: unless-stopped
+    ports:
+      - "${SHLINK_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DEFAULT_DOMAIN: ${DEFAULT_DOMAIN}
+      IS_HTTPS_ENABLED: ${IS_HTTPS_ENABLED:-false}
+      DB_DRIVER: maria
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-shlink}
+      DB_USER: ${DB_USER:-shlink}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
+      SKIP_INITIAL_GEOLITE_DOWNLOAD: ${SKIP_INITIAL_GEOLITE_DOWNLOAD:-true}
+      INITIAL_API_KEY: ${INITIAL_API_KEY:-}
+      REDIS_SERVERS: tcp://redis:6379
+      WEB_WORKER_NUM: ${WEB_WORKER_NUM:-4}
+      TASK_WORKER_NUM: ${TASK_WORKER_NUM:-2}
+      MEMORY_LIMIT: ${MEMORY_LIMIT:-512M}
+      TIMEZONE: ${TIMEZONE:-UTC}
+    volumes:
+      - shlink_data:/etc/shlink/data
+    networks:
+      - shlink_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    container_name: shlink_db
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME:-shlink}
+      MARIADB_USER: ${DB_USER:-shlink}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - shlink_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    container_name: shlink_redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - shlink_net
+
+volumes:
+  shlink_data:
+  db_data:
+  redis_data:
+
+networks:
+  shlink_net:
+    driver: bridge

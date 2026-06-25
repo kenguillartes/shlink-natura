@@ -1,4 +1,8 @@
 .idea
+MEMORY.md
+.env
+backups/
+deploy/nginx/ssl/*.pem
 bin/rr
 .pid
 build

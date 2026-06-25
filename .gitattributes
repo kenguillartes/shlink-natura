@@ -20,3 +20,11 @@ phpunit.xml.dist export-ignore
 phpunit-api.xml export-ignore
 phpunit-db.xml export-ignore
 phpstan.neon
+
+# Force LF line endings for shell scripts and config files
+*.sh text eol=lf
+Makefile text eol=lf
+deploy/nginx/default.conf text eol=lf
+docker-compose.prod.yml text eol=lf
+docker-compose.proxy.yml text eol=lf
+.env.example text eol=lf
