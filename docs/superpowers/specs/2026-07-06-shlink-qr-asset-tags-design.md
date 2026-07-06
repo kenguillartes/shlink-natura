@@ -19,7 +19,8 @@ short URLs; scanning `http://<VM-IP>:8080/eq-<id>` opens
 | Short domain | VM IP + port (`http://<VM-IP>:8080`) — no DNS setup |
 | Odoo integration | **Approach A′**: deterministic slugs (`eq-<id>`) + VM-side sync worker. Odoo server actions cannot make HTTP calls (safe_eval sandbox), and Odoo MCP is read-only, so no automation lives in Odoo. Kenny confirmed he already navigates by `web#id=<id>` manually. |
 | Odoo-side changes | UI-only, performed by Kenny following a written guide (template placeholder + ZPL edit). No custom fields, no automations, no module changes. |
-| Label | Keep 2.00" × 0.70" stock; compress text + Code128 into left ~280 dots, QR (~0.45") on the right |
+| Label | Keep 2.00" × 0.70" stock; **QR-only, centered** (Kenny dropped the Code128 barcode — the QR replaces it) |
+| VM static IP | `10.1.0.72` → short URLs are `http://10.1.0.72:8080/eq-<id>` |
 | VM provisioning | Claude drives the Proxmox web UI (VE 6.4, node `pve1`) via the Chrome extension. Next free VMID: 113. |
 
 ## Architecture
@@ -81,16 +82,16 @@ First run backfills all existing equipment. Odoo/Shlink downtime → log + retry
 cycle; the container never crashes the stack. Deleted/archived equipment keeps its
 short URL (harmless; YAGNI on cleanup).
 
-### 4. Odoo label changes (Kenny, guided by `docs/odoo-setup.md`)
+### 4. Odoo label changes (template ID 284 "IT Asset Tag", model `maintenance.equipment`)
 
-On the **IT Asset Tag** `zpl.label.template` (model `maintenance.equipment`):
+Status at design time:
 
-- Placeholder `EQ_URL`: Field = `ID` (`id`), Transform = **Prefix**, Prefix Text =
-  `http://<VM-IP>:8080/eq-`.
-- Placeholder `SERIAL`: Field = `Serial Number` (`serial_no`) — replaces the
-  hardcoded SN/asset text in the current demo ZPL (adjust to whatever field Kenny
-  actually barcodes; the guide covers both).
-- New ZPL (draft — final tuning against the Labelary preview in the template form):
+- **DONE via MCP** — placeholder record `natura.print.placeholder` ID 2366:
+  `placeholder = eq_url`, Field = `ID` (ir.model.fields 12712), Transform = **Prefix**,
+  Prefix Text = `http://10.1.0.72:8080/eq-`. (MCP `create_record` is allowed.)
+- **Kenny pastes the ZPL** — MCP `update_record` is blanket-denied on this instance,
+  so the `zpl_code` body is replaced manually in the template form. Placeholders are
+  referenced as `${name}` (convention observed in existing templates).
 
 ```zpl
 ^XA
@@ -98,32 +99,17 @@ On the **IT Asset Tag** `zpl.label.template` (model `maintenance.equipment`):
 ^LL142
 ^LH0,0
 
-^FO0,8
-^FB280,1,0,C,0
-^A0N,22,22
-^FDNATURA^FS
-
-^FO0,34
-^FB280,1,0,C,0
-^A0N,20,20
-^FDSN: {SERIAL}^FS
-
-^FO6,62
-^BY2,2,40
-^BCN,40,Y,N,N
-^FD{SERIAL}^FS
-
-^FO305,24
-^BQN,2,3
-^FDMA,{EQ_URL}^FS
+^FO145,13
+^BQN,2,4
+^FDMA,${eq_url}^FS
 
 ^XZ
 ```
 
-QR sizing: ~30-char URL → QR version 3 (29 modules) at ECC M, magnification 3 =
-~87 dots ≈ 0.43" — scannable at 203 DPI from a phone at close range. If preview/print
-tests show marginal scanning, drop to ECC L or bump magnification to 4 (116 dots,
-still inside the 142-dot height).
+QR sizing: ~30-char URL (`http://10.1.0.72:8080/eq-182`) → QR version 3 (29 modules)
+at ECC M, magnification 4 = 116 dots ≈ 0.57", centered at (145, 13) on the
+406×142-dot canvas. If preview shows the auto-selected version differs, re-center
+accordingly; magnification 3 (87 dots) is the fallback if it ever overflows.
 
 ## Error handling
 
