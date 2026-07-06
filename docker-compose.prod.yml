@@ -73,12 +73,32 @@ services:
     container_name: shlink_web_client
     image: shlinkio/shlink-web-client:latest
     restart: unless-stopped
-    ports:
-      - "${WEB_CLIENT_PORT:-8081}:8080"
-    # Intentionally no SHLINK_SERVER_* env: visitors must enter the API key
-    # themselves (stored only in their browser), so the UI isn't open admin.
+    # No public port — only reachable through web_auth's password gate.
+    environment:
+      SHLINK_SERVER_URL: http://${DEFAULT_DOMAIN}
+      SHLINK_SERVER_API_KEY: ${SHLINK_API_KEY}
+      SHLINK_SERVER_NAME: Natura Shlink
     depends_on:
       - shlink
+    networks:
+      - shlink_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web_auth:
+    container_name: shlink_web_auth
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${WEB_CLIENT_PORT:-8081}:80"
+    volumes:
+      - ./deploy/nginx-webui.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/htpasswd:/etc/nginx/htpasswd:ro
+    depends_on:
+      - web_client
     networks:
       - shlink_net
     logging:
