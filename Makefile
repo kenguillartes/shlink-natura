@@ -2,7 +2,8 @@ COMPOSE       = docker compose -f docker-compose.prod.yml
 COMPOSE_PROXY = $(COMPOSE) -f docker-compose.proxy.yml
 
 .PHONY: up up-proxy down build rebuild logs logs-shlink logs-db \
-        restart update backup shell api-key ps clean gen-certs
+        restart update backup shell api-key ps clean gen-certs \
+        sync logs-sync
 
 ## Start core services (Shlink + MariaDB + Redis)
 up:
@@ -57,6 +58,14 @@ shell:
 ## Generate a new Shlink API key
 api-key:
 	docker exec shlink bin/cli api-key:generate
+
+## Run one Odoo -> Shlink sync immediately (backfill / test)
+sync:
+	$(COMPOSE) run --rm odoo_sync python -u sync.py --once
+
+## Tail the Odoo sync worker logs
+logs-sync:
+	$(COMPOSE) logs -f odoo_sync
 
 ## Show status of all containers
 ps:
