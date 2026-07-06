@@ -18,15 +18,15 @@ import urllib.error
 import urllib.request
 import xmlrpc.client
 
-ODOO_URL = os.environ["ODOO_URL"].rstrip("/")
-ODOO_DB = os.environ["ODOO_DB"]
-ODOO_USER = os.environ["ODOO_USER"]
-ODOO_API_KEY = os.environ["ODOO_API_KEY"]
+ODOO_URL = os.environ.get("ODOO_URL", "").rstrip("/")
+ODOO_DB = os.environ.get("ODOO_DB", "")
+ODOO_USER = os.environ.get("ODOO_USER", "")
+ODOO_API_KEY = os.environ.get("ODOO_API_KEY", "")
 
 SHLINK_BASE_URL = os.environ.get("SHLINK_BASE_URL", "http://shlink:8080").rstrip("/")
-SHLINK_API_KEY = os.environ["SHLINK_API_KEY"]
+SHLINK_API_KEY = os.environ.get("SHLINK_API_KEY", "")
 
-LONG_URL_TEMPLATE = os.environ["LONG_URL_TEMPLATE"]
+LONG_URL_TEMPLATE = os.environ.get("LONG_URL_TEMPLATE", "")
 SLUG_PREFIX = os.environ.get("SLUG_PREFIX", "eq-")
 INTERVAL = int(os.environ.get("SYNC_INTERVAL_SECONDS", "900"))
 
@@ -94,6 +94,17 @@ def run_cycle():
 
 def main():
     once = "--once" in sys.argv
+    missing = [name for name, val in [
+        ("ODOO_URL", ODOO_URL), ("ODOO_DB", ODOO_DB), ("ODOO_USER", ODOO_USER),
+        ("ODOO_API_KEY", ODOO_API_KEY), ("SHLINK_API_KEY", SHLINK_API_KEY),
+        ("LONG_URL_TEMPLATE", LONG_URL_TEMPLATE),
+    ] if not val]
+    if missing:
+        log.warning("not configured yet — missing: %s. Edit .env and restart.", ", ".join(missing))
+        if once:
+            sys.exit(1)
+        while True:
+            time.sleep(INTERVAL)
     while True:
         try:
             ok = run_cycle()
