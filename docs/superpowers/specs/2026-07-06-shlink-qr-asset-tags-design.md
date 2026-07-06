@@ -86,9 +86,14 @@ short URL (harmless; YAGNI on cleanup).
 
 Status at design time:
 
-- **DONE via MCP** — placeholder record `natura.print.placeholder` ID 2366:
-  `placeholder = eq_url`, Field = `ID` (ir.model.fields 12712), Transform = **Prefix**,
-  Prefix Text = `http://10.1.0.72:8080/eq-`. (MCP `create_record` is allowed.)
+Layout (Kenny's final call): "NATURA" line, "SN: <serial>" line, QR centered below.
+
+- **DONE via MCP** — placeholder records on `natura.print.placeholder`
+  (MCP `create_record` is allowed on this instance):
+  - ID 2366: `placeholder = eq_url`, Field = `ID` (ir.model.fields 12712),
+    Transform = **Prefix**, Prefix Text = `http://10.1.0.72:8080/eq-`.
+  - ID 2367: `placeholder = serial`, Field = `Serial Number` (ir.model.fields 12697),
+    no transform.
 - **Kenny pastes the ZPL** — MCP `update_record` is blanket-denied on this instance,
   so the `zpl_code` body is replaced manually in the template form. Placeholders are
   referenced as `${name}` (convention observed in existing templates).
@@ -99,17 +104,28 @@ Status at design time:
 ^LL142
 ^LH0,0
 
-^FO145,13
-^BQN,2,4
+^FO0,4
+^FB406,1,0,C,0
+^A0N,20,20
+^FDNATURA^FS
+
+^FO0,26
+^FB406,1,0,C,0
+^A0N,18,18
+^FDSN: ${serial}^FS
+
+^FO159,48
+^BQN,2,3
 ^FDMA,${eq_url}^FS
 
 ^XZ
 ```
 
 QR sizing: ~30-char URL (`http://10.1.0.72:8080/eq-182`) → QR version 3 (29 modules)
-at ECC M, magnification 4 = 116 dots ≈ 0.57", centered at (145, 13) on the
-406×142-dot canvas. If preview shows the auto-selected version differs, re-center
-accordingly; magnification 3 (87 dots) is the fallback if it ever overflows.
+at ECC M, magnification 3 = 87 dots ≈ 0.43" (module ≈ 0.37 mm — fine for phone
+cameras at close range). Vertical budget: text rows end ~y=44, QR spans y=48–135 on
+the 142-dot canvas. If the preview shows overflow, drop the SN font to 16 or shift
+the QR to y=46.
 
 ## Error handling
 

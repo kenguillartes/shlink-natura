@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/Kenny/Documents/Shlink-Natura\" remote -v)",
+      "Bash(claude plugin *)",
+      "Bash(git -C \"C:/Users/Kenny/Documents/Shlink-Natura\" log --oneline -10)",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__get_guide",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__list_models",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__describe_model",
+      "mcp__odoo__server_info",
+      "Bash(git checkout *)",
+      "Bash(git commit -m 'Add design spec for Shlink QR asset tags *)",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__search_records",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__list_workflows",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__create_record",
+      "mcp__a53a22da-1dcb-46f9-9061-a522fbd70b0b__update_record",
+      "Bash(git commit -m 'Update spec: QR-only label, IP 10.1.0.72, placeholder created via MCP *)",
+      "Bash(git commit -q -m 'Spec: restore NATURA/SN text lines above centered QR; add serial placeholder *)"
+    ]
+  }
+}
